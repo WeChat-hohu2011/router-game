@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>鸿鹄网工模拟器 | 章节选择</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Noto+Sans+SC:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --g:#00C47A;--b:#1EB0E8;--y:#E8B820;--r:#E84545;
+  --font-body:'Noto Sans SC','PingFang SC','Microsoft YaHei',sans-serif;
+  --font-mono:'JetBrains Mono','Cascadia Code','Consolas',monospace;
+  --font-hd:'Orbitron','Courier New',monospace;
+}
+:root, html[data-theme="dark"]{
+  --bg:#060C18;--bg2:#0B1528;--bg3:#0F1E38;
+  --txt:#C8D8F5;--txt2:#6878A0;--txt3:#8FA8D8;
+  --bdr:rgba(56,200,255,.12);--bdrg:rgba(0,200,122,.3);
+  --glowg:0 0 16px rgba(0,196,122,.22);--glowb:0 0 16px rgba(30,176,232,.22);
+  --shadow:rgba(0,0,0,.45);
+  --grid-line:rgba(56,200,255,.04);
+  --bg-glow1:rgba(0,196,122,.05);--bg-glow2:rgba(30,176,232,.06);
+}
+html[data-theme="light"]{
+  --bg:#F0F4FA;--bg2:#FFFFFF;--bg3:#E8EEF8;
+  --txt:#1A2640;--txt2:#6878A0;--txt3:#3A5080;
+  --bdr:rgba(30,140,220,.14);--bdrg:rgba(0,160,100,.28);
+  --glowg:0 0 14px rgba(0,160,100,.15);--glowb:0 0 14px rgba(30,140,220,.15);
+  --shadow:rgba(100,120,160,.18);
+  --grid-line:rgba(100,140,200,.06);
+  --bg-glow1:rgba(0,180,120,.04);--bg-glow2:rgba(30,140,220,.05);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{font-size:clamp(13px,1.6vw,16px);}
+body{
+  background:var(--bg);color:var(--txt);
+  font-family:var(--font-body);min-height:100vh;
+  overflow-x:hidden;
+  display:flex;justify-content:center;
+}
+body::before{
+  content:'';position:fixed;inset:0;
+  background-image:linear-gradient(var(--grid-line) 1px,transparent 1px),
+    linear-gradient(90deg,var(--grid-line) 1px,transparent 1px);
+  background-size:44px 44px;pointer-events:none;z-index:0;
+}
+body::after{
+  content:'';position:fixed;inset:0;
+  background:radial-gradient(ellipse at 15% 40%,var(--bg-glow1) 0%,transparent 55%),
+    radial-gradient(ellipse at 85% 15%,var(--bg-glow2) 0%,transparent 50%),
+    radial-gradient(ellipse at 50% 95%,var(--bg-glow2) 0%,transparent 50%);
+  pointer-events:none;z-index:0;
+}
+#app{
+  position:relative;z-index:1;
+  width:100%;max-width:800px;
+  padding:clamp(24px,4vw,48px) clamp(12px,3vw,24px) 60px;
+}
+
+/* 主题切换按钮 */
+#theme-btn{
+  position:fixed;top:14px;right:16px;z-index:999;
+  background:var(--bg2);border:1px solid var(--bdr);
+  border-radius:20px;padding:5px 12px 5px 8px;
+  font-size:12px;color:var(--txt2);cursor:pointer;
+  display:flex;align-items:center;gap:6px;
+  font-family:var(--font-mono);
+  transition:border-color .2s,box-shadow .2s,background .3s,color .3s;
+  box-shadow:0 2px 8px var(--shadow);
+}
+#theme-btn:hover{border-color:var(--bdrg);color:var(--txt);}
+
+/* 顶部标题区 */
+.hero{text-align:center;padding:24px 0 40px;}
+.hero-label{
+  font-size:11px;color:var(--b);font-family:var(--font-mono);
+  letter-spacing:.18em;text-transform:uppercase;margin-bottom:16px;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+}
+.hero-label::before,.hero-label::after{content:'//';opacity:.4;}
+.hero-title{
+  font-family:var(--font-hd);font-size:clamp(22px,4vw,36px);
+  font-weight:700;color:var(--g);
+  text-shadow:0 0 30px rgba(0,196,122,.35);
+  letter-spacing:.05em;margin-bottom:8px;
+}
+.hero-sub{
+  font-size:13px;color:var(--txt2);font-family:var(--font-mono);
+  margin-bottom:20px;
+}
+.hero-desc{
+  font-size:14px;color:var(--txt3);line-height:1.8;
+  max-width:520px;margin:0 auto;
+}
+
+/* 分割线 */
+.divider{
+  display:flex;align-items:center;gap:12px;
+  margin:32px 0 24px;
+}
+.divider-line{flex:1;height:1px;background:var(--bdr);}
+.divider-txt{
+  font-size:11px;color:var(--txt2);font-family:var(--font-mono);
+  letter-spacing:.1em;white-space:nowrap;
+}
+
+/* 章节卡片列表 */
+.chapters{display:flex;flex-direction:column;gap:16px;}
+
+/* 解锁章节卡片 */
+.chap-card{
+  background:var(--bg2);border:1px solid var(--bdrg);
+  border-radius:14px;overflow:hidden;
+  box-shadow:var(--glowg);
+  transition:transform .2s,box-shadow .2s;
+  cursor:pointer;text-decoration:none;color:inherit;
+  display:block;
+  animation:cardIn .4s both;
+}
+.chap-card:hover{
+  transform:translateY(-2px);
+  box-shadow:0 0 28px rgba(0,196,122,.3);
+}
+@keyframes cardIn{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+
+/* 锁定章节卡片 */
+.chap-card-locked{
+  background:var(--bg2);border:1px solid var(--bdr);
+  border-radius:14px;overflow:hidden;
+  opacity:.65;
+  animation:cardIn .4s both;
+}
+.chap-card:nth-child(1){animation-delay:.05s;}
+.chap-card-locked:nth-child(2){animation-delay:.12s;}
+.chap-card-locked:nth-child(3){animation-delay:.19s;}
+.chap-card-locked:nth-child(4){animation-delay:.26s;}
+
+/* 卡片顶部色条 */
+.chap-bar{height:3px;}
+.bar-active{background:linear-gradient(90deg,var(--g),var(--b));}
+.bar-locked{background:var(--bdr);}
+
+/* 卡片内容 */
+.chap-body{padding:20px 22px 18px;}
+.chap-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px;}
+.chap-meta{flex:1;}
+.chap-num{
+  font-size:10px;color:var(--b);font-family:var(--font-mono);
+  letter-spacing:.12em;text-transform:uppercase;margin-bottom:5px;
+  display:flex;align-items:center;gap:6px;
+}
+.chap-num::before{content:'//';opacity:.5;}
+.chap-title{font-size:18px;font-weight:700;color:var(--txt);margin-bottom:4px;}
+.chap-subtitle{font-size:12px;color:var(--txt2);}
+
+/* 状态徽章 */
+.badge{
+  font-size:10px;font-family:var(--font-mono);font-weight:700;
+  padding:4px 10px;border-radius:6px;white-space:nowrap;flex-shrink:0;
+}
+.badge-active{
+  background:rgba(0,196,122,.15);color:var(--g);
+  border:1px solid rgba(0,196,122,.35);
+}
+.badge-soon{
+  background:rgba(56,200,255,.08);color:var(--txt2);
+  border:1px solid var(--bdr);
+}
+.badge-locked{
+  background:rgba(255,255,255,.04);color:var(--txt2);
+  border:1px solid var(--bdr);
+}
+
+/* 章节描述 */
+.chap-desc{font-size:13px;color:var(--txt3);line-height:1.7;margin-bottom:14px;}
+
+/* 标签行 */
+.chap-tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px;}
+.tag{
+  font-size:10.5px;padding:2px 9px;border-radius:4px;
+  font-family:var(--font-mono);font-weight:500;
+}
+.tag-g{background:rgba(0,196,122,.1);color:var(--g);border:1px solid rgba(0,196,122,.2);}
+.tag-b{background:rgba(56,200,255,.1);color:var(--b);border:1px solid rgba(56,200,255,.2);}
+.tag-y{background:rgba(232,184,32,.1);color:var(--y);border:1px solid rgba(232,184,32,.2);}
+.tag-gray{background:rgba(255,255,255,.04);color:var(--txt2);border:1px solid var(--bdr);}
+
+/* 底部信息行 */
+.chap-foot{
+  display:flex;align-items:center;justify-content:space-between;
+  padding-top:14px;border-top:1px solid var(--bdr);flex-wrap:wrap;gap:8px;
+}
+.chap-stat{
+  font-size:11px;color:var(--txt2);font-family:var(--font-mono);
+  display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+}
+.chap-stat span{display:flex;align-items:center;gap:4px;}
+.chap-cta{
+  font-size:12px;font-weight:700;color:var(--g);
+  font-family:var(--font-mono);display:flex;align-items:center;gap:6px;
+  transition:gap .2s;
+}
+.chap-card:hover .chap-cta{gap:10px;}
+
+/* 钩子预告框 */
+.hook-box{
+  margin:0 22px 18px;padding:12px 16px;
+  background:rgba(232,184,32,.06);
+  border:1px solid rgba(232,184,32,.2);
+  border-radius:8px;
+}
+.hook-label{
+  font-size:10px;color:var(--y);font-family:var(--font-mono);
+  letter-spacing:.1em;margin-bottom:6px;
+}
+.hook-text{font-size:12.5px;color:var(--txt3);line-height:1.65;}
+
+/* 锁定提示 */
+.locked-hint{
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  padding:14px;font-size:12px;color:var(--txt2);font-family:var(--font-mono);
+  border-top:1px solid var(--bdr);
+}
+
+/* 底部版权 */
+.footer{
+  margin-top:48px;padding-top:20px;
+  border-top:1px solid var(--bdr);
+  text-align:center;
+}
+.footer-txt{font-size:11px;color:var(--txt2);font-family:var(--font-mono);line-height:2;}
+
+/* 亮色适配 */
+html[data-theme="light"] .chap-card,
+html[data-theme="light"] .chap-card-locked{box-shadow:0 2px 12px var(--shadow);}
+html[data-theme="light"] .chap-card:hover{box-shadow:0 4px 20px var(--shadow);}
+</style>
+
+<!-- Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-5NVEHB3V15"></script>
+<script>
+window.dataLayer=window.dataLayer||[];
+function gtag(){dataLayer.push(arguments);}
+gtag('js',new Date());
+gtag('config','G-5NVEHB3V15');
+function gaEvent(n,p){try{if(typeof gtag==='function')gtag('event',n,p||{});}catch(e){}}
+
+// 主题切换
+function toggleTheme(){
+  const html=document.documentElement;
+  const isDark=html.getAttribute('data-theme')!=='light';
+  html.setAttribute('data-theme',isDark?'light':'dark');
+  document.getElementById('tb-icon').textContent=isDark?'🌙':'☀️';
+  document.getElementById('tb-txt').textContent=isDark?'暗色':'亮色';
+  try{localStorage.setItem('hh-theme',isDark?'light':'dark');}catch(e){}
+}
+window.addEventListener('DOMContentLoaded',()=>{
+  try{
+    const t=localStorage.getItem('hh-theme');
+    if(t){
+      document.documentElement.setAttribute('data-theme',t);
+      document.getElementById('tb-icon').textContent=t==='light'?'🌙':'☀️';
+      document.getElementById('tb-txt').textContent=t==='light'?'暗色':'亮色';
+    }
+  }catch(e){}
+});
+</script>
+</head>
+<body>
+
+<button id="theme-btn" onclick="toggleTheme()" title="切换明暗主题">
+  <span id="tb-icon">☀️</span>
+  <span id="tb-txt">亮色</span>
+</button>
+
+<div id="app">
+
+  <!-- 顶部标题区 -->
+  <div class="hero">
+    <div class="hero-label">由鸿鹄论坛考生共同打造</div>
+    <div class="hero-title">路由人生</div>
+    <div class="hero-sub">// 网络工程师职业生涯真实模拟</div>
+    <div class="hero-desc">
+      从专科毕业生到 CTO，每一个决策都影响你的职业走向。<br>
+      <span style="color:var(--g);font-size:12px;font-family:var(--font-mono);">// 更多章节持续创作中 · 你的故事，也可以成为下一章</span>
+    </div>
+  </div>
+
+  <!-- 章节列表 -->
+  <div class="divider">
+    <div class="divider-line"></div>
+    <div class="divider-txt">// 章节选择</div>
+    <div class="divider-line"></div>
+  </div>
+
+  <div class="chapters">
+
+    <!-- 第一章：已解锁 -->
+    <a class="chap-card" href="chapter1.html" onclick="gaEvent('chapter_click',{chapter:1})">
+      <div class="chap-bar bar-active"></div>
+      <div class="chap-body">
+        <div class="chap-head">
+          <div class="chap-meta">
+            <div class="chap-num">第一章</div>
+            <div class="chap-title">入职试炼</div>
+            <div class="chap-subtitle">三线城市 · 小公司网维岗 · 试用期三个月</div>
+          </div>
+          <div class="badge badge-active">✅ 已上线</div>
+        </div>
+        <div class="chap-desc">
+          你刚从专科毕业，拿到一张 CCNA，兜里揣着 800 元，入职了一家 20 人小公司的网络维护岗。老板说：「试用期三个月，看表现。」断网、环路、ARP 欺骗、勒索病毒……32 个真实工单等你处理，每一个决策都决定你能走多远。
+        </div>
+        <div class="chap-tags">
+          <span class="tag tag-g">32个场景</span>
+          <span class="tag tag-b">6种结局</span>
+          <span class="tag tag-y">真实技术解析</span>
+          <span class="tag tag-b">连击奖励</span>
+          <span class="tag tag-g">职业成长线</span>
+        </div>
+        <div class="chap-foot">
+          <div class="chap-stat">
+            <span>🕐 40-60分钟</span>
+            <span>🎯 初级网工 → CTO</span>
+          </div>
+          <div class="chap-cta">▶ 开始游戏 →</div>
+        </div>
+      </div>
+      <!-- 第一章结尾钩子 -->
+      <div class="hook-box">
+        <div class="hook-label">// 第二章预告 · 乙方求生</div>
+        <div class="hook-text">
+          第一章打完，以为自己已经是老手了？<br>
+          项目验收前一天，甲方说「需求改了」——你没有加班费，没有延期权，只有一个字：改。<br>
+          出差酒店的单人床，笔记本屏幕的蓝光，和一份永远改不完的拓扑图。<br><br>
+          <strong style="color:var(--y);">这才是大多数网工真实的第二关。</strong>
+        </div>
+      </div>
+    </a>
+
+    <!-- 第二章：敬请期待 -->
+    <div class="chap-card-locked">
+      <div class="chap-bar bar-locked"></div>
+      <div class="chap-body">
+        <div class="chap-head">
+          <div class="chap-meta">
+            <div class="chap-num">第二章</div>
+            <div class="chap-title">乙方求生</div>
+            <div class="chap-subtitle">系统集成商 · 全国出差 · 项目制工作</div>
+          </div>
+          <div class="badge badge-soon">🔒 即将上线</div>
+        </div>
+        <div class="chap-desc">
+          合同签了三个月，项目却做了七个月。<br>
+          甲方说「这个功能不在合同里」，你翻出合同找到那句话，他说「你理解有误」。<br>
+          出差补贴 150 元一天，住的快捷酒店热水器坏了，明天早上八点要去甲方开验收会。<br><br>
+          <span style="color:var(--r);font-weight:600;">你有没有在某个项目里，明明知道方案有问题，却被逼着签字确认？</span>
+        </div>
+        <div class="chap-tags">
+          <span class="tag tag-gray">甲方说「需求改了」</span>
+          <span class="tag tag-gray">验收扯皮</span>
+          <span class="tag tag-gray">出差酒店深夜改图</span>
+          <span class="tag tag-gray">被迫背锅</span>
+        </div>
+        <div style="margin:2px 0 14px;padding:12px 14px;background:rgba(232,184,32,.05);border:1px solid rgba(232,184,32,.15);border-radius:8px;">
+          <div style="font-size:10px;color:var(--y);font-family:var(--font-mono);margin-bottom:5px;letter-spacing:.08em;">// 场景预览</div>
+          <div style="font-size:12.5px;color:var(--txt3);line-height:1.7;">
+            项目上线前夜，核心交换机配置推上去，全楼断网。<br>
+            甲方负责人冲进机房：「你们乙方搞什么？合同里写的是零中断！」<br>
+            你看着日志，发现问题出在甲方自己改过的 VLAN 表上——<br>
+            <span style="color:var(--y);">你说还是不说？说了，项目款可能泡汤。</span>
+          </div>
+        </div>
+        <div class="chap-foot">
+          <div class="chap-stat">
+            <span>📅 持续创作中</span>
+            <span>🎯 乙方人的血与泪</span>
+          </div>
+        </div>
+      </div>
+      <div class="locked-hint">🔒 尚未开放 · 那些你被迫妥协的瞬间，在这里重新选择</div>
+    </div>
+
+    <!-- 第三章：未开放 -->
+    <div class="chap-card-locked">
+      <div class="chap-bar bar-locked"></div>
+      <div class="chap-body">
+        <div class="chap-head">
+          <div class="chap-meta">
+            <div class="chap-num">第三章</div>
+            <div class="chap-title">跳槽风云</div>
+            <div class="chap-subtitle">一线城市 · 大厂 · 内卷与机遇</div>
+          </div>
+          <div class="badge badge-locked">🔒 未开放</div>
+        </div>
+        <div class="chap-desc">
+          大厂 offer 下来那天，你截图发给父母，他们说「好好干，稳定」。<br>
+          入职第一周，mentor 跟你说：「这里不养闲人，季度 OKR 没达标直接绩效 C。」<br>
+          你看着工位上前任留下的一瓶藿香正气水，突然有点明白了什么。<br><br>
+          <span style="color:var(--r);font-weight:600;">你当初接那个 offer，是因为钱，还是因为不甘心？</span>
+        </div>
+        <div class="chap-tags">
+          <span class="tag tag-gray">大厂 OKR 博弈</span>
+          <span class="tag tag-gray">绩效 PIP 危机</span>
+          <span class="tag tag-gray">同事抢功劳</span>
+          <span class="tag tag-gray">要不要跟 leader 硬刚</span>
+        </div>
+        <div style="margin:2px 0 14px;padding:12px 14px;background:rgba(232,184,32,.05);border:1px solid rgba(232,184,32,.15);border-radius:8px;">
+          <div style="font-size:10px;color:var(--y);font-family:var(--font-mono);margin-bottom:5px;letter-spacing:.08em;">// 场景预览</div>
+          <div style="font-size:12.5px;color:var(--txt3);line-height:1.7;">
+            你发现网络架构有个设计缺陷，会在高并发时触发，修复要停服四小时。<br>
+            你写了报告，leader 看了说：「现在不是时候，等季度结了再说。」<br>
+            三周后，大促期间系统崩了，leader 在复盘会上说：「这块没人跟进。」<br>
+            <span style="color:var(--y);">那份报告还在你的草稿箱里——你拿出来，还是删掉？</span>
+          </div>
+        </div>
+        <div class="chap-foot">
+          <div class="chap-stat">
+            <span>📅 规划中</span>
+            <span>🎯 大厂打工人的困局</span>
+          </div>
+        </div>
+      </div>
+      <div class="locked-hint">🔒 尚未开放 · 那份没人替你撑腰的委屈，在这里有答案</div>
+    </div>
+
+    <!-- 第四章：未开放 -->
+    <div class="chap-card-locked">
+      <div class="chap-bar bar-locked"></div>
+      <div class="chap-body">
+        <div class="chap-head">
+          <div class="chap-meta">
+            <div class="chap-num">第四章</div>
+            <div class="chap-title">考证冲刺</div>
+            <div class="chap-subtitle">HCIE / CCIE · 备考 · 职业天花板突破</div>
+          </div>
+          <div class="badge badge-locked">🔒 未开放</div>
+        </div>
+        <div class="chap-desc">
+          你报名的 HCIE 考试还有 47 天，题库刷了不到三分之一。<br>
+          今天下午被临时拉去处理一个「两小时内搞定」的故障，搞了六小时。<br>
+          回到家，打开题库 App，看了三道题，睡着了。<br><br>
+          <span style="color:var(--r);font-weight:600;">备考期间，你有没有想过直接退款放弃？那个念头，是几点出现的？</span>
+        </div>
+        <div class="chap-tags">
+          <span class="tag tag-gray">真实 HCIE 考题</span>
+          <span class="tag tag-gray">备考 vs 加班</span>
+          <span class="tag tag-gray">考试当天的压力</span>
+          <span class="tag tag-gray">一次没过的崩溃</span>
+        </div>
+        <div style="margin:2px 0 14px;padding:12px 14px;background:rgba(232,184,32,.05);border:1px solid rgba(232,184,32,.15);border-radius:8px;">
+          <div style="font-size:10px;color:var(--y);font-family:var(--font-mono);margin-bottom:5px;letter-spacing:.08em;">// 场景预览</div>
+          <div style="font-size:12.5px;color:var(--txt3);line-height:1.7;">
+            考场里，Lab 题目跟你刷的版本不一样，拓扑变了，时间只剩 40 分钟。<br>
+            你旁边的人已经开始收拾东西准备提前交卷。<br>
+            考官走过来，用粤语说了一句你没听懂的话。<br>
+            <span style="color:var(--y);">这 40 分钟，你怎么分配？这道题，你敢不敢赌？</span>
+          </div>
+        </div>
+        <div class="chap-foot">
+          <div class="chap-stat">
+            <span>📅 规划中</span>
+            <span>🎯 考过的人懂，没考过的人怕</span>
+          </div>
+        </div>
+      </div>
+      <div class="locked-hint">🔒 尚未开放 · 47 天能备考 HCIE 吗？这里告诉你答案</div>
+    </div>
+
+
+    <!-- ===== 港台线分割线 ===== -->
+    <div class="divider" style="margin-top:32px;">
+      <div class="divider-line"></div>
+      <div class="divider-txt" style="color:var(--y);">// 全球华人线 · 即将开启</div>
+      <div class="divider-line"></div>
+    </div>
+    <div style="text-align:center;font-size:12px;color:var(--txt2);font-family:var(--font-mono);margin-bottom:20px;line-height:1.8;">
+      大陆之外，还有另一种网工人生。<br>
+      <span style="color:var(--y);">同样的告警、同样的锅、同样的深夜——不同的江湖，同样的你。</span>
+    </div>
+
+    <!-- 香港线预告 -->
+    <div class="chap-card-locked chap-card-hk">
+      <div class="chap-bar" style="background:linear-gradient(90deg,#BA0000,#FFD700);"></div>
+      <div class="chap-body">
+        <div class="chap-head">
+          <div class="chap-meta">
+            <div class="chap-num" style="color:var(--y);">香港线 · 番外篇</div>
+            <div class="chap-title">獅子山下的封包</div>
+            <div class="chap-subtitle">香港 · 外資IT · 粵英雙語職場</div>
+          </div>
+          <div class="badge" style="background:rgba(186,0,0,.12);color:#FF6B6B;border:1px solid rgba(186,0,0,.3);">🇭🇰 規劃中</div>
+        </div>
+        <div class="chap-desc" style="font-size:13px;">
+          凌晨兩點，你在銅鑼灣的出租屋剛睡著——手機響了。<br>
+          數據中心 UPS 告警，主電失效，備用電切換失敗，整層機房 30 秒內斷電。<br>
+          甲方是國際清算銀行，每秒交易額過億港幣，SLA 要求 99.999%。<br><br>
+          <span style="color:var(--y);font-weight:600;">你有沒有想過：那次你拍板重啟的決定，究竟對不對？</span>
+        </div>
+        <div class="chap-tags">
+          <span class="tag" style="background:rgba(186,0,0,.1);color:#FF8888;border:1px solid rgba(186,0,0,.2);">外資銀行機房</span>
+          <span class="tag" style="background:rgba(186,0,0,.1);color:#FF8888;border:1px solid rgba(186,0,0,.2);">颱風應急處置</span>
+          <span class="tag" style="background:rgba(186,0,0,.1);color:#FF8888;border:1px solid rgba(186,0,0,.2);">粵英雙語職場</span>
+          <span class="tag" style="background:rgba(186,0,0,.1);color:#FF8888;border:1px solid rgba(186,0,0,.2);">CISSP · ITIL</span>
+          <span class="tag" style="background:rgba(186,0,0,.1);color:#FF8888;border:1px solid rgba(186,0,0,.2);">港式外判文化</span>
+        </div>
+        <div style="margin:14px 0 4px;padding:12px 14px;background:rgba(255,215,0,.05);border:1px solid rgba(255,215,0,.15);border-radius:8px;">
+          <div style="font-size:10px;color:var(--y);font-family:var(--font-mono);margin-bottom:5px;letter-spacing:.08em;">// 場景預覽</div>
+          <div style="font-size:12.5px;color:var(--txt3);line-height:1.7;">
+            颱風信號 8 懸掛，地鐵停駛，的士不出車。<br>
+            你的手機連續響了 11 次——機房溫度告警、鏈路抖動、VPN 隧道全斷。<br>
+            老闆發來一條 WhatsApp：「Fix it. Now.」<br><br>
+            <span style="color:var(--r);">當年那晚，你是怎麼處理的？如果你做錯了選擇——這遊戲告訴你正確答案。</span>
+          </div>
+        </div>
+        <div class="chap-foot" style="margin-top:14px;">
+          <div class="chap-stat">
+            <span>🌏 面向全球華人</span>
+            <span>📅 規劃中</span>
+          </div>
+        </div>
+      </div>
+      <div class="locked-hint" style="border-top:1px solid rgba(186,0,0,.15);">
+        🔒 敬請期待 · 你曾經歷過的那個夜晚，在這裡找到答案
+      </div>
+    </div>
+
+    <!-- 台湾线预告 -->
+    <div class="chap-card-locked chap-card-tw">
+      <div class="chap-bar" style="background:linear-gradient(90deg,#000095,#FE0000);"></div>
+      <div class="chap-body">
+        <div class="chap-head">
+          <div class="chap-meta">
+            <div class="chap-num" style="color:#6EB5FF;">台灣線 · 番外篇</div>
+            <div class="chap-title">矽谷旁的機房</div>
+            <div class="chap-subtitle">新竹科學園區 · 半導體廠 · 台灣之光</div>
+          </div>
+          <div class="badge" style="background:rgba(0,0,149,.12);color:#6EB5FF;border:1px solid rgba(0,0,149,.3);">🇹🇼 規劃中</div>
+        </div>
+        <div class="chap-desc" style="font-size:13px;">
+          你入職竹科某晶圓廠協力商，試用期第 11 天。<br>
+          廠內骨幹交換機突然 CPU 100%，生產線 MES 系統全線斷線，<br>
+          良率監控、機台通訊、ERP 對接——一口氣全掛。<br><br>
+          <span style="color:#6EB5FF;font-weight:600;">廠長站在你背後，沉默地看著你的螢幕。每一秒，都是損失。</span>
+        </div>
+        <div class="chap-tags">
+          <span class="tag" style="background:rgba(0,0,149,.1);color:#6EB5FF;border:1px solid rgba(0,0,149,.25);">半導體廠網路維護</span>
+          <span class="tag" style="background:rgba(0,0,149,.1);color:#6EB5FF;border:1px solid rgba(0,0,149,.25);">智慧製造 OT/IT</span>
+          <span class="tag" style="background:rgba(0,0,149,.1);color:#6EB5FF;border:1px solid rgba(0,0,149,.25);">中華電信對接</span>
+          <span class="tag" style="background:rgba(0,0,149,.1);color:#6EB5FF;border:1px solid rgba(0,0,149,.25);">竹科加班文化</span>
+          <span class="tag" style="background:rgba(0,0,149,.1);color:#6EB5FF;border:1px solid rgba(0,0,149,.25);">CCNP · JNCIP</span>
+        </div>
+        <div style="margin:14px 0 4px;padding:12px 14px;background:rgba(110,181,255,.05);border:1px solid rgba(110,181,255,.12);border-radius:8px;">
+          <div style="font-size:10px;color:#6EB5FF;font-family:var(--font-mono);margin-bottom:5px;letter-spacing:.08em;">// 場景預覽</div>
+          <div style="font-size:12.5px;color:var(--txt3);line-height:1.7;">
+            骨幹交換機 log 裡幾千條告警刷個不停，你根本看不完。<br>
+            同事建議直接重啟，你猶豫了——<br>
+            重啟要停線 20 分鐘，不重啟可能根本查不出原因。<br><br>
+            <span style="color:var(--r);">你選哪個？錯了，試用期就結束了。這遊戲裡有那個你沒選的答案。</span>
+          </div>
+        </div>
+        <div class="chap-foot" style="margin-top:14px;">
+          <div class="chap-stat">
+            <span>🌏 面向全球華人</span>
+            <span>📅 規劃中</span>
+          </div>
+        </div>
+      </div>
+      <div class="locked-hint" style="border-top:1px solid rgba(0,0,149,.15);">
+        🔒 敬請期待 · 那個讓你輾轉難眠的故障，在這裡重新來過
+      </div>
+    </div>
+
+
+
+  </div><!-- .chapters -->
+
+  <!-- 底部合并模块 -->
+  <div style="margin-top:24px;background:var(--bg2);border:1px solid var(--bdrg);border-radius:14px;overflow:hidden;box-shadow:var(--glowg);animation:cardIn .4s .3s both;">
+
+    <!-- 顶部色条 -->
+    <div style="height:3px;background:linear-gradient(90deg,var(--g),var(--b));"></div>
+
+    <div style="padding:32px 28px;text-align:center;">
+
+      <!-- 图标 + 主标题 -->
+      <div style="font-size:26px;margin-bottom:14px;">✍️</div>
+      <div style="font-size:17px;font-weight:700;color:var(--txt);margin-bottom:10px;">还有更多章节等待诞生</div>
+
+      <!-- 描述 -->
+      <div style="font-size:13px;color:var(--txt3);line-height:1.9;margin-bottom:6px;">
+        第五章香港线、第六章台湾线、第七章创业线……<br>
+        每一个真实的网工故事，都值得被写进游戏里。
+      </div>
+      <div style="font-size:13px;color:var(--txt3);line-height:1.9;margin-bottom:20px;">
+        你在机房熬过的那个夜晚、被甲方刁难的那个下午、考场里那道做错的题——<br>
+        <span style="color:var(--g);font-weight:600;">这些经历，可以变成别人的教训，也可以变成下一章的剧情。</span>
+      </div>
+
+      <!-- 分割线 -->
+      <div style="border-top:1px solid var(--bdr);margin:20px 0;"></div>
+
+      <!-- 关注提示 -->
+      <div style="font-size:11px;color:var(--g);font-family:var(--font-mono);letter-spacing:.1em;margin-bottom:8px;">// 不想错过下一章更新？</div>
+      <div style="font-size:14px;color:var(--txt);font-weight:600;margin-bottom:4px;">关注鸿鹄论坛，第一时间获取更新通知</div>
+      <div style="font-size:12px;color:var(--txt2);margin-bottom:22px;">新章节上线时，论坛会第一时间发布通知 · 参与共创让你的故事成为下一章</div>
+
+      <!-- 两个按钮 -->
+      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+        <span style="display:inline-block;color:var(--txt2);font-size:13px;font-weight:700;padding:9px 22px;border-radius:8px;font-family:var(--font-mono);letter-spacing:.04em;border:1px solid var(--bdr);">
+          → 加入共创
+        </span>
+        <a href="https://bbs.hh010.com/forum.php?mod=viewthread&tid=675592" target="_blank"
+           onclick="gaEvent('forum_click')"
+           style="display:inline-block;background:linear-gradient(135deg,var(--g),var(--b));color:#fff;font-size:13px;font-weight:700;padding:9px 22px;border-radius:8px;text-decoration:none;font-family:var(--font-mono);letter-spacing:.04em;transition:opacity .2s;"
+           onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
+          前往鸿鹄论坛 →
+        </a>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 底部版权 -->
+  <div class="footer">
+    <div class="footer-txt">
+      © 2026 WeChat-hohu2011 | 鸿鹄论坛 原创作品<br>
+      持续连载更新中 · 欢迎分享给同行网工
+    </div>
+  </div>
+
+</div><!-- #app -->
+</body>
+</html>
